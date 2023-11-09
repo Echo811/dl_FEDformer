@@ -34,6 +34,18 @@ class Model(nn.Module):
                                                   configs.dropout)
         self.dec_embedding = DataEmbedding_wo_pos(configs.dec_in, configs.d_model, configs.embed, configs.freq,
                                                   configs.dropout)
+        '''
+            2023年11月9日 19点16分
+            
+            configs.use_wavelet 在args中并没有定义
+            因此报错：
+                  File "U:\CODE\ICML2022-FEDformer\layers\AutoCorrelation.py", line 35, in __init__
+                    self.use_wavelet = configs.wavelet
+                AttributeError: 'Namespace' object has no attribute 'wavelet'
+                
+            【此问题仅仅在Autoformer模型中遇到，因此这个模型会用到 wavelet 参数】
+        '''
+        configs.wavelet = 1
 
         # Encoder
         self.encoder = Encoder(
@@ -41,7 +53,7 @@ class Model(nn.Module):
                 EncoderLayer(
                     AutoCorrelationLayer(
                         AutoCorrelation(False, configs.factor, attention_dropout=configs.dropout,
-                                        output_attention=configs.output_attention),
+                                        output_attention=configs.output_attention, configs=configs),
                         configs.d_model, configs.n_heads),
                     configs.d_model,
                     configs.d_ff,
@@ -58,11 +70,11 @@ class Model(nn.Module):
                 DecoderLayer(
                     AutoCorrelationLayer(
                         AutoCorrelation(True, configs.factor, attention_dropout=configs.dropout,
-                                        output_attention=False),
+                                        output_attention=False, configs=configs),
                         configs.d_model, configs.n_heads),
                     AutoCorrelationLayer(
                         AutoCorrelation(False, configs.factor, attention_dropout=configs.dropout,
-                                        output_attention=False),
+                                        output_attention=False, configs=configs),
                         configs.d_model, configs.n_heads),
                     configs.d_model,
                     configs.c_out,
